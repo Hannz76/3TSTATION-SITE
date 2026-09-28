@@ -1,4 +1,5 @@
-node_modules/
-tsconfig.tsbuildinfo
-.wrangler/
-.dev.vars
+# Build artifacts
+dist/
+
+# Logs and temp files
+*.log
