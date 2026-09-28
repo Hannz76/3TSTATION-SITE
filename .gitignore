@@ -1,5 +1,1 @@
-# Build artifacts
-dist/
-
-# Logs and temp files
-*.log
+node_modules/
