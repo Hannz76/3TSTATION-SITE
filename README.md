@@ -44,5 +44,5 @@ With a business WhatsApp number configured, customers can open their prepared me
 
 Before launch, add verified contacts, prices and currency, service coverage, shop hours, repair terms, any applicable inspection fees/warranties, and yogurt sizes/ingredients/allergen information. Connect a backend only if live order placement or payment is needed. Fonts currently load from Google Fonts; host them locally if required by your privacy or offline requirements.
 
-The supplied Netlify configuration publishes `dist` and supports SPA fallback.
+SPA fallback is handled by `wrangler.jsonc` (`not_found_handling: single-page-application`), so no `_redirects` file is needed.
 # 3TSTATION-SITE
