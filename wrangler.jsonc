@@ -12,7 +12,8 @@
     {
       "binding": "REVIEWS_DB",
       "database_name": "3tstation-reviews",
-      "database_id": "local-reviews-db",
+      "database_id": "65a960a5-77ba-44d5-ba87-96b8f18e2d2b",
+      "preview_database_id": "local-reviews-db",
       "migrations_dir": "migrations"
     }
   ]

@@ -69,20 +69,18 @@ The API validates every field, uses parameterized SQL, limits body size, blocks 
 
 ### Connect the production database
 
-The checked-in `database_id: "local-reviews-db"` is a **local placeholder**, not a provisioned Cloudflare database. No live deployment or remote database was created during this change. To connect your Cloudflare account:
+`wrangler.jsonc` uses the supplied production D1 database ID `65a960a5-77ba-44d5-ba87-96b8f18e2d2b` for `3tstation-reviews`. `preview_database_id` retains the existing local database identity so local reviews remain separate from production.
+
+The deployment scripts apply pending remote migrations before uploading the Worker. Cloudflare's build token must have D1 edit access to this database as well as permission to deploy the Worker. If migration fails, deployment stops. Already-applied migrations are tracked by D1 and are not rerun.
+
+For deployment from a signed-in local terminal:
 
 ```bash
 npx wrangler login
-npx wrangler d1 create 3tstation-reviews
-```
-
-Replace `database_id` in `wrangler.jsonc` with the UUID returned by the create command. Then apply the schema and deploy when ready:
-
-```bash
-npx wrangler d1 migrations apply REVIEWS_DB --remote
-npm run check:deploy
 npm run deploy
 ```
+
+For Cloudflare Builds, use the build and deploy commands below. No remote migration or deployment has been performed from this workspace; the production schema is initialized when the configured deployment command succeeds.
 
 Keep the `REVIEWS_DB` and `ASSETS` bindings and `run_worker_first: ["/api/*"]`; they ensure API requests reach the Worker while page links continue to load the site. A static-only preview (`npm run preview`) cannot publish reviews.
 
@@ -123,12 +121,12 @@ npm run deploy:dry-run
 
 `lint` checks without rewriting files. `biome.json` contains the existing project rules; `useSemanticElements` is disabled because the UI intentionally uses valid ARIA status regions and button groups. The review feed explicitly depends on its retry counter to re-fetch after an error.
 
-`deploy:dry-run` bundles the Worker and validates the assets locally; it does not prove that a remote database exists. `check:deploy` rejects the placeholder database ID. It does not authenticate or change Cloudflare resources. Configure the real D1 UUID and apply the remote migration using the steps above before deploying.
+`deploy:dry-run` bundles the Worker and validates the assets locally; it does not prove that a remote database exists. `check:deploy` rejects the placeholder database ID. It does not authenticate or change Cloudflare resources. The supplied production UUID is configured; `deploy:ci` and `deploy` apply remote migrations before deployment.
 
 For a GitHub-connected **Cloudflare Worker** build, use:
 
 - Build command: `npm run lint && npm run build`
-- Deploy command: `npm run check:deploy && npx wrangler deploy`
+- Deploy command: `npm run deploy:ci`
 - Root directory: repository root
 - Node version: 24
 - Worker name: `3tstation-site`, matching `wrangler.jsonc`
@@ -137,7 +135,7 @@ Cloudflare previously selected Bun because `bun.lock` was committed. Its Bun 1.2
 
 After pushing this fix, build the new commit instead of retrying the old failed commit. If Cloudflare still reports Bun, confirm the deployed commit no longer contains `bun.lock` or `bun.lockb`, and clear the build cache under Settings → Build → Build cache. Cloudflare's [build image documentation](https://developers.cloudflare.com/workers/ci-cd/builds/build-image/) lists its runtime versions and overrides.
 
-Apply `npx wrangler d1 migrations apply REVIEWS_DB --remote` once before the first live deployment. Local review data is not uploaded; the production database starts empty. Do not point branch previews at the production review database unless you intend them to share customer data.
+`npm run deploy:ci` initializes the review tables on the first deployment and applies only pending migrations on later deployments. Local review data is not uploaded; the production database starts empty. Do not point branch previews at the production review database unless you intend them to share customer data.
 
 These settings follow [Cloudflare Workers Builds configuration](https://developers.cloudflare.com/workers/ci-cd/builds/configuration/) and [D1 setup](https://developers.cloudflare.com/d1/get-started/).
 

@@ -12,6 +12,7 @@
     "preview": "vite preview",
     "dev:api": "wrangler dev --ip 127.0.0.1 --port 8787",
     "db:migrate": "wrangler d1 migrations apply REVIEWS_DB --local",
+    "db:migrate:remote": "wrangler d1 migrations apply REVIEWS_DB --remote",
     "preview:full": "npm run build && npm run db:migrate && npm run dev:api",
     "test:reviews": "node tests/reviews.mjs",
     "test:smoke": "node smoke.mjs",
@@ -19,7 +20,8 @@
     "test:repair": "node tests/repair-selection.mjs",
     "check:deploy": "node scripts/check-deploy.mjs",
     "deploy:dry-run": "npm run build && wrangler deploy --dry-run",
-    "deploy": "npm run check:deploy && npm run build && wrangler deploy"
+    "deploy:ci": "npm run check:deploy && npm run db:migrate:remote && wrangler deploy",
+    "deploy": "npm run check:deploy && npm run build && npm run db:migrate:remote && wrangler deploy"
   },
   "dependencies": {
     "gsap": "^3.15.0",
