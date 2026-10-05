@@ -8,9 +8,15 @@
     "build": "tsc -b && vite build --outDir dist",
     "lint": "bunx tsc --noEmit && bunx biome lint --write",
     "format": "bunx biome format --write",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "dev:api": "wrangler dev --ip 127.0.0.1 --port 8787",
+    "db:migrate": "wrangler d1 migrations apply REVIEWS_DB --local",
+    "preview:full": "npm run build && npm run db:migrate && npm run dev:api",
+    "test:reviews": "node tests/reviews.mjs"
   },
   "dependencies": {
+    "gsap": "^3.15.0",
+    "ogl": "^1.0.11",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-grab": "latest",
@@ -20,6 +26,7 @@
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
     "@eslint/js": "^9.27.0",
+    "@playwright/test": "^1.63.0",
     "@types/react": "^18.3.22",
     "@types/react-dom": "^18.3.7",
     "@typescript-eslint/eslint-plugin": "^8.32.1",
@@ -40,6 +47,10 @@
     "tailwindcss": "^3.4.17",
     "typescript": "~5.6.3",
     "typescript-eslint": "^8.32.1",
-    "vite": "^6.3.5"
+    "vite": "^6.3.5",
+    "wrangler": "^4.147.0"
+  },
+  "engines": {
+    "node": ">=22.22.2"
   }
 }

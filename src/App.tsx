@@ -1,5 +1,10 @@
-import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
+import { lazy, Suspense, useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
+import About from "./components/About/About";
+import { usePageMotion } from "./usePageMotion";
+import CustomerReviews from "./components/CustomerReviews/CustomerReviews";
 import { business, flavors, games, topupPackages, repairs, type Game } from "./data";
+
+const GradientWaves = lazy(() => import("./components/GradientWaves/GradientWaves.jsx"));
 
 function Icon({ name, size = 20, className = "" }: { name: string; size?: number; className?: string }) {
   const paths: Record<string, ReactNode> = {
@@ -14,6 +19,8 @@ function Icon({ name, size = 20, className = "" }: { name: string; size?: number
     shield: <><path d="m12 3 8 3v6c0 4-4 7-8 9-4-2-8-5-8-9V6l8-3Z" /><path d="m8 12 3 3 5-6" /></>,
     heart: <path d="M20.5 4.7a5.5 5.5 0 0 0-7.8 0L12 5.5l-.7-.8a5.5 5.5 0 0 0-7.8 7.8L12 21l8.5-8.5a5.5 5.5 0 0 0 0-7.8Z" />,
     chat: <><path d="M21 11.5a9 9 0 0 1-13.3 8L3 21l1.5-4.7A9 9 0 1 1 21 11.5Z" /><path d="M8 9h8m-8 4h5" /></>,
+    instagram: <><rect x="3" y="3" width="18" height="18" rx="5" /><circle cx="12" cy="12" r="4" /><path d="M17.5 6.5h.01" /></>,
+    facebook: <path d="M14 21v-8h3l.5-4H14V7c0-1.2.4-2 2-2h2V2.5c-.8-.2-1.8-.3-3-.3-3 0-5 1.8-5 5V9H7v4h3v8" />,
     search: <><circle cx="10.5" cy="10.5" r="6.5" /><path d="m16 16 5 5" /></>,
     close: <path d="m6 6 12 12M18 6 6 18" />,
     menu: <path d="M4 7h16M4 12h16M4 17h16" />,
@@ -54,13 +61,14 @@ function Header({ openModal }: { openModal: OpenModal }) {
     const next = !dark;
     setDark(next);
     document.documentElement.dataset.theme = next ? "dark" : "light";
+    document.querySelector('meta[name="theme-color"]')?.setAttribute("content", next ? "#0d1b2a" : "#f4f1de");
     try { localStorage.setItem("3t-theme", next ? "dark" : "light"); } catch { /* Browsers with blocked storage still get the theme for this page. */ }
   };
   return <>
     <div className="announcement"><span>Three good things. One happy place.</span><span className="announcement-right">Made for your everyday <Icon name="sparkle" size={13} /></span></div>
     <header className="header"><div className="container header-inner"><Brand />
       <nav className={mobile ? "navigation navigation-open" : "navigation"} id="main-navigation" aria-label="Main navigation">
-        {[ ["Game top-up", "/#games"], ["Phone repair", "/repair"], ["Fresh yogurt", "/#yogurt"], ["Our story", "/#about"] ].map(([label, href]) => <a key={href} href={href} onClick={() => setMobile(false)}>{label}</a>)}
+        {[ ["Game top-up", "/#games"], ["Phone repair", "/#repair"], ["Fresh yogurt", "/#yogurt"], ["Our story", "/#about"], ["Reviews", "/#reviews"] ].map(([label, href]) => <a key={href} href={href} onClick={() => setMobile(false)}>{label}</a>)}
         <button className="mobile-contact" onClick={() => { setMobile(false); openModal({ type: "contact" }); }}>Let's talk <Icon name="chat" size={16} /></button>
       </nav>
       <button className="theme-toggle icon-button" type="button" onClick={toggleTheme} aria-label={dark ? "Switch to light mode" : "Switch to dark mode"} title={dark ? "Light mode" : "Dark mode"}><Icon name={dark ? "sun" : "moon"} size={19} /></button>
@@ -79,7 +87,9 @@ function PhoneArt({ small = false }: { small?: boolean }) {
 }
 
 function Hero() {
-  return <section className="hero container" id="home">
+  return <section className="hero-shell" id="home">
+    <div className="hero-wave-background" aria-hidden="true"><Suspense fallback={null}><GradientWaves horizonColor="#0D1B2A" waveColor="#415A77" crestColor="#D4C4A8" speed={0.25} amplitude={2.5} waveScale={0.6} waveRatio={0.9} swell={35} turbulence={20} tilt={1.11} zoom={1} height={5.5} fogDepth={35} detail="low" brightness={1} opacity={0.9} mouseInteraction parallaxStrength={0.3} grain grainIntensity={0.025} /></Suspense></div>
+    <div className="hero container">
     <div className="hero-copy"><div className="eyebrow"><span className="live-dot" /> WELCOME TO YOUR NEW FAVOURITE STATION</div>
       <h1>Level up.<br />Fix up.<br /><span>Freshen up.</span><span className="heading-sparkle">✳</span></h1>
       <p>More play. Less worry. A little sweetness.<br />Game top-ups, phone repairs, and delicious yogurt.<br className="desktop-break" /> All the good stuff, right here at 3T Station.</p>
@@ -87,10 +97,11 @@ function Hero() {
       <div className="hero-footnote"><span className="mini-service-icons"><Icon name="game" size={14} /><Icon name="screen" size={14} /><Icon name="stick" size={14} /></span><span>3 little ways to make your day better.</span></div>
     </div>
     <div className="hero-bento">
-      <a className="bento-game" href="/topup"><div className="bento-label"><span><Icon name="game" size={16} /> PLAY WITHOUT LIMITS</span><span className="round-arrow"><Icon name="diagonal" size={18} /></span></div><div className="bento-game-title">Your next level<br />starts here.</div><span className="bento-game-outline">PLAY</span><img className="controller-image" src="/images/game-controller.svg" alt="White gaming controller with lime-green details" /><span className="bento-sticker"><Icon name="bolt" size={13} /> GAME ON.</span><span className="bento-caption">Game top-ups, made simple.</span></a>
+      <a className="bento-game" href="/topup"><div className="bento-label"><span><Icon name="game" size={16} /> PLAY WITHOUT LIMITS</span><span className="round-arrow"><Icon name="diagonal" size={18} /></span></div><div className="bento-game-title">Your next level<br />starts here.</div><span className="bento-game-outline">PLAY</span><img className="controller-image" src="/images/game-controller.svg" alt="Ivory gaming controller with sage details" /><span className="bento-sticker"><Icon name="bolt" size={13} /> GAME ON.</span><span className="bento-caption">Game top-ups, made simple.</span></a>
       <a className="bento-repair" href="#repair"><div className="bento-label"><span>FIX IT. LOVE IT AGAIN.</span><Icon name="diagonal" size={18} /></div><h2>Back in<br />your hands.</h2><PhoneArt small /><span className="small-bento-caption">Phone repair <Icon name="arrow" size={14} /></span></a>
       <a className="bento-yogurt" href="#yogurt"><div className="bento-label"><span>HAPPINESS, ON A STICK.</span><Icon name="diagonal" size={18} /></div><h2>Take a<br /><em>sweet</em> break.</h2><span className="bento-yogurt-photos">{flavors.map(flavor => <img key={flavor.slug} src={flavor.image} alt={`${flavor.name} yogurt stick`} />)}</span><span className="small-bento-caption">Fresh yogurt <Icon name="arrow" size={14} /></span></a>
       <span className="bento-orbit" aria-hidden="true">✳</span>
+    </div>
     </div>
   </section>;
 }
@@ -137,7 +148,7 @@ function TopupCatalog() {
   const [category, setCategory] = useState("All games");
   const filtered = games.filter(game => `${game.name} ${game.region} ${game.category}`.toLowerCase().includes(query.toLowerCase()) && (category === "All games" || game.category === category));
   return <>
-    <div className="topup-hero"><div className="topup-hero-primary"><span className="eyebrow"><Icon name="bolt" size={16} /> THE PLAY STATION</span><h1>Pick a game.<br /><span>Power up.</span></h1><p>Find your favourite and get your next adventure started. Good games deserve good energy.</p><a href="#browse-games" className="button button-dark">Browse all games <Icon name="arrow" size={18} /></a><span className="topup-hero-outline" aria-hidden="true">PLAY</span><img src="/images/game-controller.svg" alt="White game controller with lime details" /></div><div className="topup-hero-side"><div className="topup-side-upper"><span className="eyebrow">YOUR FAVOURITES, RIGHT HERE</span><h2>Every game<br />has a next level.</h2><Icon name="game" size={64} /></div><div className="topup-side-lower"><Icon name="shield" size={26} /><div><strong>Top up with peace of mind.</strong><p>Check your player ID carefully. We'll confirm price and availability before any payment.</p></div></div></div></div>
+    <div className="topup-hero"><div className="topup-hero-primary"><span className="eyebrow"><Icon name="bolt" size={16} /> THE PLAY STATION</span><h1>Pick a game.<br /><span>Power up.</span></h1><p>Find your favourite and get your next adventure started. Good games deserve good energy.</p><a href="#browse-games" className="button button-dark">Browse all games <Icon name="arrow" size={18} /></a><span className="topup-hero-outline" aria-hidden="true">PLAY</span><img src="/images/game-controller.svg" alt="Ivory game controller with sage details" /></div><div className="topup-hero-side"><div className="topup-side-upper"><span className="eyebrow">YOUR FAVOURITES, RIGHT HERE</span><h2>Every game<br />has a next level.</h2><Icon name="game" size={64} /></div><div className="topup-side-lower"><Icon name="shield" size={26} /><div><strong>Top up with peace of mind.</strong><p>Check your player ID carefully. We'll confirm price and availability before any payment.</p></div></div></div></div>
     {!query && category === "All games" && <section className="topup-popular" aria-labelledby="popular-title"><div className="topup-section-heading"><div><div className="eyebrow"><Icon name="sparkle" size={16} /> POPULAR PICKS</div><h2 id="popular-title">In the spotlight<span className="green-text">.</span></h2></div><a href="#browse-games" className="text-link">See all games <Icon name="arrow" size={17} /></a></div><div className="game-grid">{games.slice(0, 6).map((game, index) => <GameCard key={game.slug} game={game} index={index} />)}</div></section>}
     <section className="topup-browse" id="browse-games" aria-labelledby="browse-title"><div className="topup-section-heading"><div><div className="eyebrow"><Icon name="game" size={16} /> THE FULL LINEUP</div><h2 id="browse-title">All games<span className="green-text">.</span></h2></div><span className="topup-game-count">{games.length} titles to explore</span></div><label className="search-field topup-search"><Icon name="search" size={19} /><input type="search" aria-label="Search games" value={query} onChange={event => setQuery(event.target.value)} placeholder="Search games or regions..." /></label><div className="catalog-tabs" role="group" aria-label="Game categories">{["All games", "UID Games", "Other Region", "Via Login"].map(tab => <button type="button" aria-pressed={category === tab} className={category === tab ? "selected" : ""} key={tab} onClick={() => setCategory(tab)}>{tab}</button>)}</div><p className="result-count" role="status">Showing {filtered.length} game{filtered.length === 1 ? "" : "s"}</p>{filtered.length ? <div className="topup-game-grid">{filtered.map((game, index) => <GameCard game={game} key={game.slug} index={index + 1} />)}</div> : <div className="empty-state"><Icon name="search" size={36} /><h3>No games found just yet.</h3><p>Try another title or choose a different category.</p><button className="text-link" onClick={() => { setQuery(""); setCategory("All games"); }}>Show all games <Icon name="arrow" size={16} /></button></div>}</section>
     <div className="topup-bottom-note"><Icon name="chat" size={22} /><p>Can't find what you're looking for? Reach out and we'll let you know what's available.</p><a href="/#games" className="text-link">Back to the main site <Icon name="diagonal" size={16} /></a></div>
@@ -187,10 +198,6 @@ function YogurtSection({ openModal }: { openModal: OpenModal }) {
   return <section className="section container yogurt-section" id="yogurt"><div className="section-heading"><div><div className="eyebrow"><span className="section-index">03 /</span> THE HAPPY STATION</div><h2>A little stick. A lot of happy<span className="green-text">.</span></h2><p>Your everyday deserves a sweet little pause. Make it a yogurt moment.</p></div><span className="yogurt-handwritten">Unwrap. Smile. Repeat. <span>↴</span></span></div><div className="flavor-grid">{flavors.map((flavor, index) => <article className={`flavor-card ${flavor.slug}`} key={flavor.slug}><div className="flavor-art"><span className="flavor-note">{flavor.note}</span><span className="flavor-background-text" aria-hidden="true">{flavor.name}</span><img src={flavor.image} alt={`${flavor.name} yogurt stick`} loading="lazy" /><span className="flavor-art-sparkle" aria-hidden="true">✧</span></div><div className="flavor-copy"><div><h3>{flavor.name}</h3><p>{flavor.tagline}</p></div><button className="flavor-button" onClick={() => openModal({ type: "yogurt", flavor: index })} aria-label={`Choose ${flavor.name} yogurt`}><Icon name="arrow" size={21} /></button></div></article>)}</div><div className="yogurt-footer"><span><Icon name="heart" size={17} /> Made for your feel-good moments.</span><p>Can't pick a favourite? <button onClick={() => openModal({ type: "yogurt", flavor: -1 })}>Make it a trio <Icon name="arrow" size={15} /></button></p></div></section>;
 }
 
-function AboutSection() {
-  return <section className="about-section" id="about"><div className="container about-layout"><div className="about-heading"><div className="eyebrow">SAME STATION. DIFFERENT GOOD THINGS.</div><h2>Life's a little better<br />with a good pit stop.</h2><span className="about-sparkle" aria-hidden="true">✳</span></div><div className="about-copy"><p>We're 3T Station. A place for the things you love and the little things you need. From your next gaming adventure to giving your phone a second life — with something sweet along the way.</p><p>Three different passions, one simple idea:<br /><strong>make your everyday a little more awesome.</strong></p><div className="about-tags"><span><Icon name="game" size={15} /> Play a little.</span><span><Icon name="tool" size={15} /> Worry less.</span><span><Icon name="stick" size={15} /> Enjoy more.</span></div></div></div></section>;
-}
-
 function FaqSection({ openModal }: { openModal: OpenModal }) {
   const faqs = [
     ["How do I top up my game?", "Choose your game and region, enter your player ID, and select or request a package. You can then prepare an enquiry for our team. We'll confirm the current price, payment instructions, and availability before you proceed. Never share your password for a UID top-up."],
@@ -201,8 +208,15 @@ function FaqSection({ openModal }: { openModal: OpenModal }) {
   return <section className="section container faq-section"><div><div className="eyebrow">GOOD QUESTIONS. SIMPLE ANSWERS.</div><h2>A little curious?</h2><p>We're here to make things easy.</p><button className="text-link" onClick={() => openModal({ type: "contact" })}>Ask us anything <Icon name="diagonal" size={16} /></button></div><div className="faq-list">{faqs.map(([question, answer]) => <details key={question}><summary>{question}<Icon name="plus" size={18} /></summary><p>{answer}</p></details>)}</div></section>;
 }
 
+function SocialLinks() {
+  return <div className="business-social-links" aria-label="Follow 3T Station">
+    <a href={business.instagram} target="_blank" rel="noopener noreferrer"><Icon name="instagram" size={17} /> Instagram <Icon name="diagonal" size={12} /></a>
+    <a href={business.facebook} target="_blank" rel="noopener noreferrer"><Icon name="facebook" size={17} /> Facebook <Icon name="diagonal" size={12} /></a>
+  </div>;
+}
+
 function Footer({ openModal }: { openModal: OpenModal }) {
-  return <><section className="container"><div className="contact-banner"><div><span className="eyebrow">YOUR NEXT GOOD THING STARTS HERE.</span><h2>What can we do for you today?</h2></div><button className="button button-dark" onClick={() => openModal({ type: "contact" })}>Let's have a chat <Icon name="chat" size={19} /></button><span className="banner-decoration" aria-hidden="true">✳</span></div></section><footer className="footer container"><div className="footer-top"><div><Brand footer /><p>Play. Repair. Refresh.<br />Your everyday, a little better.</p></div><div className="footer-column"><h3>Find your station</h3><a href="/topup">Game top-up</a><a href="/#repair">Phone repair</a><a href="/#yogurt">Fresh yogurt</a></div><div className="footer-column"><h3>A little about us</h3><a href="/#about">The 3T story</a><button onClick={() => openModal({ type: "contact" })}>Get in touch <Icon name="diagonal" size={13} /></button><span>Made with a little extra care.</span></div><div className="footer-signoff"><span>Good games.<br />Good as new.<br /><em>Good mood.</em></span><Icon name="sparkle" size={25} /></div></div><div className="footer-bottom"><span>© {new Date().getFullYear()} 3T Station. All rights reserved.</span><span>Three good things. One station. <span className="green-text">✳</span></span><a href="#main-content">Back to top ↑</a></div></footer></>;
+  return <><section className="container"><div className="contact-banner"><div><span className="eyebrow">YOUR NEXT GOOD THING STARTS HERE.</span><h2>What can we do for you today?</h2></div><button className="button button-dark" onClick={() => openModal({ type: "contact" })}>Let's have a chat <Icon name="chat" size={19} /></button><span className="banner-decoration" aria-hidden="true">✳</span></div></section><footer className="footer container"><div className="footer-top"><div><Brand footer /><p>Play. Repair. Refresh.<br />Your everyday, a little better.</p></div><div className="footer-column"><h3>Find your station</h3><a href="/topup">Game top-up</a><a href="/#repair">Phone repair</a><a href="/#yogurt">Fresh yogurt</a></div><div className="footer-column"><h3>A little about us</h3><a href="/#about">The 3T story</a><a href="/#reviews">Customer reviews</a><button onClick={() => openModal({ type: "contact" })}>Get in touch <Icon name="diagonal" size={13} /></button><a href={`https://wa.me/${business.whatsapp}`} target="_blank" rel="noopener noreferrer"><Icon name="chat" size={14} /> WhatsApp · +{business.whatsapp}</a><SocialLinks /></div><div className="footer-signoff"><span>Good games.<br />Good as new.<br /><em>Good mood.</em></span><Icon name="sparkle" size={25} /></div></div><div className="footer-bottom"><span>© {new Date().getFullYear()} 3T Station. All rights reserved.</span><span>Three good things. One station. <span className="green-text">✳</span></span><a href="#main-content">Back to top ↑</a></div></footer></>;
 }
 
 function Modal({ title, children, close, wide = false }: { title: string; children: ReactNode; close: () => void; wide?: boolean }) {
@@ -260,7 +274,7 @@ function YogurtForm({ initialFlavor }: { initialFlavor: number }) {
 }
 
 function Contact({ openModal }: { openModal: OpenModal }) {
-  return <div className="contact-modal"><p className="modal-intro">Whatever brings you to our station, we're happy you're here. What can we help with?</p><div className="contact-options"><a href="/topup"><span className="service-icon green"><Icon name="game" size={22} /></span><span><strong>Power up my game</strong><small>Browse the game top-up catalogue</small></span><Icon name="arrow" size={18} /></a>{[{ icon: "screen", title: "Give my phone a fresh start", copy: "Prepare a repair quote request", action: () => openModal({ type: "repair", issue: "Screen repair" }) }, { icon: "stick", title: "Find something sweet", copy: "Choose your yogurt flavours", action: () => openModal({ type: "yogurt", flavor: -1 }) }].map(item => <button key={item.title} onClick={item.action}><span className="service-icon green"><Icon name={item.icon} size={22} /></span><span><strong>{item.title}</strong><small>{item.copy}</small></span><Icon name="arrow" size={18} /></button>)}</div>{business.whatsapp && <a className="button full-width" href={`https://wa.me/${business.whatsapp}?text=${encodeURIComponent("Hi 3T Station! I'd like to know more.")}`} target="_blank" rel="noreferrer"><Icon name="chat" size={18} /> Chat on WhatsApp</a>}{business.email && <a className="contact-email" href={`mailto:${business.email}`}>{business.email}</a>}{business.address && <p className="contact-address">Visit us: {business.address}</p>}{!business.whatsapp && !business.email && <div className="form-notice"><Icon name="info" size={18} /><span>Our contact details and store information are coming soon. You can explore our services and prepare an enquiry in the meantime.</span></div>}</div>;
+  return <div className="contact-modal"><p className="modal-intro">Whatever brings you to our station, we're happy you're here. What can we help with?</p><div className="contact-options"><a href="/topup"><span className="service-icon green"><Icon name="game" size={22} /></span><span><strong>Power up my game</strong><small>Browse the game top-up catalogue</small></span><Icon name="arrow" size={18} /></a>{[{ icon: "screen", title: "Give my phone a fresh start", copy: "Prepare a repair quote request", action: () => openModal({ type: "repair", issue: "Screen repair" }) }, { icon: "stick", title: "Find something sweet", copy: "Choose your yogurt flavours", action: () => openModal({ type: "yogurt", flavor: -1 }) }].map(item => <button key={item.title} onClick={item.action}><span className="service-icon green"><Icon name={item.icon} size={22} /></span><span><strong>{item.title}</strong><small>{item.copy}</small></span><Icon name="arrow" size={18} /></button>)}</div>{business.whatsapp && <a className="button full-width" href={`https://wa.me/${business.whatsapp}?text=${encodeURIComponent("Hi 3T Station! I'd like to know more.")}`} target="_blank" rel="noreferrer"><Icon name="chat" size={18} /> Chat on WhatsApp · +{business.whatsapp}</a>}<SocialLinks />{business.email && <a className="contact-email" href={`mailto:${business.email}`}>{business.email}</a>}{business.address && <p className="contact-address">Visit us: {business.address}</p>}{!business.whatsapp && !business.email && <div className="form-notice"><Icon name="info" size={18} /><span>Our contact details and store information are coming soon. You can explore our services and prepare an enquiry in the meantime.</span></div>}</div>;
 }
 
 const repairModels = ["iPhone 11", "iPhone 13", "iPhone 15", "Galaxy S23", "Galaxy A54", "Redmi Note 13"];
@@ -279,6 +293,7 @@ function RepairPage() {
 }
 
 export default function App() {
+  usePageMotion();
   const [modal, setModal] = useState<ModalState>(null);
   const path = window.location.pathname.replace(/\/+$/, "") || "/";
   const isTopup = path === "/topup" || path.startsWith("/topup/");
@@ -300,5 +315,5 @@ export default function App() {
     return () => { document.removeEventListener("click", onNavigate); window.removeEventListener("pageshow", onPageShow); };
   }, []);
   useEffect(() => { document.title = isTopup ? `${path === "/topup" ? "Game Top-up" : path.includes("/order/") ? "Top-up Enquiry" : path === "/topup/calculator" ? "Win Rate Calculator" : path === "/topup/check-region" ? "Check ID Format" : "Track Order"} — 3T Station` : "3T Station — Play. Repair. Refresh."; }, [path, isTopup]);
-  return <><a className="skip-link" href="#main-content">Skip to content</a><Header openModal={setModal} />{isTopup ? <TopupPage path={path} /> : isRepair ? <RepairPage /> : <main id="main-content"><Hero /><Services /><GameSection /><RepairSection /><YogurtSection openModal={setModal} /><AboutSection /><FaqSection openModal={setModal} /></main>}<Footer openModal={setModal} />{modal && <Modal key={modal.type} title={titles[modal.type]} close={() => setModal(null)}>{modal.type === "repair" && <RepairForm issue={modal.issue} />}{modal.type === "yogurt" && <YogurtForm initialFlavor={modal.flavor} />}{modal.type === "contact" && <Contact openModal={setModal} />}</Modal>}</>;
+  return <><a className="skip-link" href="#main-content">Skip to content</a><Header openModal={setModal} />{isTopup ? <TopupPage path={path} /> : isRepair ? <RepairPage /> : <main id="main-content"><Hero /><Services /><GameSection /><RepairSection /><YogurtSection openModal={setModal} /><About /><CustomerReviews /><FaqSection openModal={setModal} /></main>}<Footer openModal={setModal} />{modal && <Modal key={modal.type} title={titles[modal.type]} close={() => setModal(null)}>{modal.type === "repair" && <RepairForm issue={modal.issue} />}{modal.type === "yogurt" && <YogurtForm initialFlavor={modal.flavor} />}{modal.type === "contact" && <Contact openModal={setModal} />}</Modal>}</>;
 }

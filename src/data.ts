@@ -1,7 +1,9 @@
-// Replace these values with the business's own details before going live.
+// Business contact details; fill in the remaining placeholders before going live.
 export const business = {
   name: "3T Station",
-  whatsapp: "", // International digits only, e.g. 60123456789. No '+' or spaces.
+  whatsapp: "601128094829", // International digits only. No '+' or spaces.
+  instagram: "https://www.instagram.com/3t_station?stkn=Y2F1Mjl2a3M4bWg2",
+  facebook: "https://www.facebook.com/share/1Hoao9scvu/",
   email: "",
   address: "",
   logo: "", // Add your logo to public/images and enter /images/your-logo.svg here.

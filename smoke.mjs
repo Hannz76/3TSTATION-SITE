@@ -8,11 +8,20 @@ const errors = [];
 page.on("pageerror", error => errors.push(error.message));
 try {
   await page.goto(process.env.SITE_URL || "http://localhost:5173", { waitUntil: "networkidle" });
+  assert.equal(await page.locator("html").getAttribute("data-theme"), "dark", "New visitors start in dark mode");
+  await page.getByRole("button", { name: "Switch to light mode" }).click();
   assert.match(await page.title(), /3T Station/);
   assert.match(await page.locator("main").evaluate(element => getComputedStyle(element).animationName), /content-in/);
   assert.equal(await page.locator(".game-grid .game-card").count(), 6);
   assert.equal(await page.locator(".bento-yogurt-photos img").count(), 3);
   assert.equal(await page.locator(".bento-yogurt-photos img").evaluateAll(images => images.every(image => image.complete && image.naturalWidth > 0)), true, "Yogurt photos load");
+  await page.locator("#main-navigation").getByRole("link", { name: "Our story", exact: true }).click();
+  await page.waitForFunction(() => [...document.querySelectorAll(".founder-card")].every(card => card.classList.contains("is-revealed")));
+  assert.equal(await page.locator(".founder-card").first().evaluate(element => getComputedStyle(element).animationName), "section-reveal", "Founder cards animate when scrolled into view");
+  await page.locator("#main-navigation").getByRole("link", { name: "Phone repair", exact: true }).click();
+  await page.waitForURL(/\/#repair$/);
+  assert.equal(new URL(page.url()).pathname, "/", "Header repair link stays on the homepage");
+  await page.waitForFunction(() => { const top = document.querySelector("#repair").getBoundingClientRect().top; return top >= 0 && top < innerHeight; });
   await page.locator("#main-navigation").getByRole("link", { name: "Game top-up", exact: true }).click();
   assert.match(page.url(), /\/#games$/);
   await page.getByRole("link", { name: /Explore all games/ }).click();
@@ -129,18 +138,18 @@ try {
   await page.getByRole("button", { name: "Switch to dark mode" }).click();
   assert.equal(await page.locator("html").getAttribute("data-theme"), "dark");
   assert.equal(await page.getByRole("button", { name: "Switch to light mode" }).count(), 1);
-  assert.equal(await page.evaluate(() => getComputedStyle(document.body).backgroundColor), "rgb(19, 27, 22)");
+  assert.equal(await page.evaluate(() => getComputedStyle(document.body).backgroundColor), "rgb(13, 27, 42)");
   await page.reload();
   assert.equal(await page.locator("html").getAttribute("data-theme"), "dark", "Dark choice persists on reload");
   await page.goto((process.env.SITE_URL || "http://localhost:5173") + "/topup/order/mobile-legends-my");
   assert.equal(await page.locator("html").getAttribute("data-theme"), "dark", "Dark choice persists on game page");
-  assert.equal(await page.locator(".topup-order-card").evaluate(el => getComputedStyle(el).backgroundColor), "rgb(29, 42, 32)");
+  assert.equal(await page.locator(".topup-order-card").evaluate(el => getComputedStyle(el).backgroundColor), "rgb(27, 38, 59)");
   await page.goto((process.env.SITE_URL || "http://localhost:5173") + "/repair");
   assert.equal(await page.locator("html").getAttribute("data-theme"), "dark", "Dark choice persists on repair page");
-  assert.equal(await page.locator(".repair-pricing-card").evaluate(el => getComputedStyle(el).backgroundColor), "rgb(29, 42, 32)");
+  assert.equal(await page.locator(".repair-pricing-card").evaluate(el => getComputedStyle(el).backgroundColor), "rgb(27, 38, 59)");
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.getByRole("button", { name: "Let's talk" }).click();
-  assert.equal(await page.locator("dialog").evaluate(el => getComputedStyle(el).backgroundColor), "rgb(29, 42, 32)");
+  assert.equal(await page.locator("dialog").evaluate(el => getComputedStyle(el).backgroundColor), "rgb(27, 38, 59)");
   await page.keyboard.press("Escape");
   for (const width of [1440, 768, 390, 320]) {
     await page.setViewportSize({ width, height: 900 });
@@ -156,6 +165,7 @@ try {
     await reduced.getByRole("navigation", { name: "Game top-up navigation" }).getByRole("link", { name: "Main site" }).click();
     await reduced.waitForURL(/\/$/);
     assert.match(reduced.url(), /\/$/, "Navigation works with reduced motion");
+    assert.equal(await reduced.locator(".motion-reveal").count(), 0, "Reduced-motion visitors see every section without reveal effects");
   } finally {
     await reduced.close();
   }
