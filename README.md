@@ -7,7 +7,7 @@ A responsive React + TypeScript + Vite business website for game top-ups, phone 
 Use Node.js 22.22.2 or newer (Node 24 LTS recommended).
 
 ```bash
-npm install
+npm ci
 npm run preview:full
 ```
 
@@ -15,13 +15,11 @@ This builds the site, initializes the local review database, and serves the full
 
 Production check: `npm run build`. Preview the build with `npm run preview`.
 
-Browser smoke check: with Vite running and Playwright/Chromium available, run `node smoke.mjs`. If Playwright is installed outside the project, set `PLAYWRIGHT_MODULE` to its absolute `index.mjs` path. The check covers top-up navigation, catalogue filtering, calculator, ID format, required fields, enquiry drafts, yogurt quantities, mobile navigation, and horizontal overflow at four widths. Set `SITE_URL` to check another server.
+Browser smoke check: with Vite or the full Worker preview running and Playwright/Chromium available, run `node smoke.mjs`. If Playwright is installed outside the project, set `PLAYWRIGHT_MODULE` to its absolute `index.mjs` path. The check covers top-up navigation, catalogue filtering, calculator, ID format, required fields, enquiry drafts, yogurt quantities, mobile navigation, and horizontal overflow at four widths. Set `SITE_URL` to check another server.
 
-## Home-page DotGrid
+## Home-page animation
 
-The hero uses the supplied React Bits DotGrid JavaScript + CSS component, in `src/components/DotGrid/`. GSAP and its InertiaPlugin provide the pointer response and click shockwaves. GSAP is included in the normal dependency install; no React Bits Pro license key is needed.
-
-Change dot size, spacing, proximity, or shockwave strength on the `DotGrid` instance in `Hero` in `src/App.tsx`. The `--hero-dot-base` and `--hero-dot-active` variables in `src/index.css` define its light and dark colours. The component loads only when the home-page hero is rendered, preserves link interactions, draws a static grid for reduced-motion users, and pauses canvas animation outside the viewport or in a hidden tab. Its `.d.ts` file describes the JavaScript props for TypeScript callers.
+The hero uses the supplied React Bits GradientWaves component in `src/components/GradientWaves/`, powered by OGL. Its settings live in `Hero` in `src/App.tsx`. Rendering is capped at 20 frames per second and 240,000 pixels, pauses offscreen, and respects reduced motion. A CSS gradient remains visible if WebGL is unavailable. The old DotGrid source is retained but is not loaded by the site.
 
 ## Replace the placeholders
 
@@ -55,7 +53,6 @@ With a business WhatsApp number configured, customers can open their prepared me
 Before launch, add verified contacts, prices and currency, service coverage, shop hours, repair terms, any applicable inspection fees/warranties, and yogurt sizes/ingredients/allergen information. Connect a backend only if live order placement or payment is needed. Fonts currently load from Google Fonts; host them locally if required by your privacy or offline requirements.
 
 SPA fallback is handled by `wrangler.jsonc` (`not_found_handling: single-page-application`), so no `_redirects` file is needed.
-# 3TSTATION-SITE
 
 
 ## Customer reviews
@@ -83,8 +80,8 @@ Replace `database_id` in `wrangler.jsonc` with the UUID returned by the create c
 
 ```bash
 npx wrangler d1 migrations apply REVIEWS_DB --remote
-npm run build
-npx wrangler deploy
+npm run check:deploy
+npm run deploy
 ```
 
 Keep the `REVIEWS_DB` and `ASSETS` bindings and `run_worker_first: ["/api/*"]`; they ensure API requests reach the Worker while page links continue to load the site. A static-only preview (`npm run preview`) cannot publish reviews.
@@ -107,3 +104,39 @@ The review check starts its own server at port 8788 and uses a temporary databas
 ## Company and founders
 
 The homepage `#about` section introduces the company and its three founders. Edit descriptions and job titles in `src/components/About/founders.ts`; the layout and styles are in the same folder. The business supplied and confirmed the portrait mapping: Muiz (game top-ups), Sidqi (phone repair), and Syabil (yogurt). Original portraits are stored in `public/images/founders/`; responsive CSS controls their framing without changing the image files.
+
+## Git and Cloudflare deployment checks
+
+Use Node 24 (`.nvmrc`). Commit the source, `public/`, database migrations, configuration, and lockfiles. `.gitignore` excludes `dist/`, installed packages, local databases, local environment secrets, logs, and test output. Cloudflare must build `dist/` from source; it is not committed.
+
+```bash
+npm ci
+npm run lint
+npm run build
+npm run test:reviews
+# With the full local Worker preview running on port 8787:
+SITE_URL=http://127.0.0.1:8787 npm run test:smoke
+npm run test:repair
+npm run test:waves
+npm run deploy:dry-run
+```
+
+`lint` checks without rewriting files. `biome.json` contains the existing project rules; `useSemanticElements` is disabled because the UI intentionally uses valid ARIA status regions and button groups. The review feed explicitly depends on its retry counter to re-fetch after an error.
+
+`deploy:dry-run` bundles the Worker and validates the assets locally; it does not prove that a remote database exists. `check:deploy` rejects the placeholder database ID. It does not authenticate or change Cloudflare resources. Configure the real D1 UUID and apply the remote migration using the steps above before deploying.
+
+For a GitHub-connected **Cloudflare Worker** build, use:
+
+- Build command: `npm run lint && npm run build`
+- Deploy command: `npm run check:deploy && npx wrangler deploy`
+- Root directory: repository root
+- Node version: 24
+- Worker name: `3tstation-site`, matching `wrangler.jsonc`
+
+Apply `npx wrangler d1 migrations apply REVIEWS_DB --remote` once before the first live deployment. Local review data is not uploaded; the production database starts empty. Do not point branch previews at the production review database unless you intend them to share customer data.
+
+These settings follow [Cloudflare Workers Builds configuration](https://developers.cloudflare.com/workers/ci-cd/builds/configuration/) and [D1 setup](https://developers.cloudflare.com/d1/get-started/).
+
+### Dependency audit (5 October 2026)
+
+Compatible security fixes have been applied and both lockfiles synchronized. The remaining npm audit finding is [braces stack-exhaustion denial of service](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm), reported through six packages in Tailwind 3's build dependency chain. The registry currently reports no fix. These packages run while building local source and are not bundled into the review Worker. Do not treat this as a clean full dependency audit; revisit the advisory or migrate the CSS build tooling when a fix is available. `tailwindcss-animate` is classified as a development dependency because it is a build plugin.

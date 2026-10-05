@@ -166,7 +166,9 @@ function TopupCalculator() {
   const [answer, setAnswer] = useState("");
   function calculate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const m = Number(matches), current = Number(rate), desired = Number(target);
+    const m = Number(matches);
+    const current = Number(rate);
+    const desired = Number(target);
     if (!Number.isSafeInteger(m) || m < 1 || current < 0 || current > 100 || desired <= current || desired >= 100) {
       setAnswer("Enter at least one match and a target higher than your current rate but below 100%.");
       return;
@@ -261,7 +263,7 @@ function TopupForm({ game }: { game: Game }) {
 function RepairForm({ issue }: { issue: string }) {
   const [ready, setReady] = useState("");
   const submit = (event: FormEvent<HTMLFormElement>) => { event.preventDefault(); const data = new FormData(event.currentTarget); setReady(`Hi 3T Station! I'd like a phone repair quote.\n\nPhone: ${value(data, "brand")} ${value(data, "model")}\nIssue: ${value(data, "issue")}\nDetails: ${value(data, "details") || "No additional details"}\nName: ${value(data, "name")}\nContact: ${value(data, "phone")}\n\nPlease let me know the next steps, any diagnosis fee, and the estimated cost and turnaround time.`); };
-  return <><div hidden={!!ready}><form className="enquiry-form" onSubmit={submit}><p className="modal-intro">A little detail goes a long way. Tell us what happened and let's work out the next step.</p><div className="form-two-columns"><label>Phone brand<select name="brand" required defaultValue=""><option value="" disabled>Select your brand</option>{["Apple", "Samsung", "Xiaomi / Redmi", "OPPO", "vivo", "realme", "HONOR", "Huawei", "Google", "Other"].map(brand => <option key={brand}>{brand}</option>)}</select></label><label>Phone model<input name="model" required maxLength={80} placeholder="e.g. iPhone 14" /></label></div><label>What needs a little care?<select name="issue" defaultValue={issue}>{repairs.map(repair => <option key={repair.name}>{repair.name}</option>)}</select></label><label>Tell us a little more <span className="optional">(optional)</span><textarea name="details" rows={3} maxLength={1000} placeholder="What happened? When did you first notice it?" /></label><ContactFields /><div className="form-notice"><Icon name="info" size={18} /><span>This prepares a quote request, not a confirmed appointment. Pricing, parts, timing, and any warranty are subject to assessment.</span></div><p className="privacy-note">Details stay in your browser until you choose to share them. Please don't include passwords or sensitive device data.</p><button type="submit" className="button full-width">Prepare repair enquiry <Icon name="arrow" size={18} /></button></form></div>{ready && <RequestReady text={ready} reset={() => setReady("")} />}</>;
+  return <><div hidden={!!ready}><form className="enquiry-form" onSubmit={submit}><p className="modal-intro">A little detail goes a long way. Tell us what happened and let's work out the next step.</p><div className="form-two-columns"><label>Phone brand<select name="brand" required defaultValue=""><option value="" disabled>Select your brand</option>{["Apple", "Samsung", "Xiaomi / Redmi", "OPPO", "vivo", "realme", "HONOR", "Huawei", "Google", "Other"].map(brand => <option key={brand}>{brand}</option>)}</select></label><label>Phone model<input name="model" required maxLength={80} placeholder="e.g. iPhone 14" /></label></div><label>What needs a little care?<select name="issue" key={issue} defaultValue={issue}>{!repairs.some(repair => repair.name === issue) && <option>{issue}</option>}{repairs.map(repair => <option key={repair.name}>{repair.name}</option>)}</select></label><label>Tell us a little more <span className="optional">(optional)</span><textarea name="details" rows={3} maxLength={1000} placeholder="What happened? When did you first notice it?" /></label><ContactFields /><div className="form-notice"><Icon name="info" size={18} /><span>This prepares a quote request, not a confirmed appointment. Pricing, parts, timing, and any warranty are subject to assessment.</span></div><p className="privacy-note">Details stay in your browser until you choose to share them. Please don't include passwords or sensitive device data.</p><button type="submit" className="button full-width">Prepare repair enquiry <Icon name="arrow" size={18} /></button></form></div>{ready && <RequestReady text={ready} reset={() => setReady("")} />}</>;
 }
 
 function YogurtForm({ initialFlavor }: { initialFlavor: number }) {
@@ -303,7 +305,9 @@ export default function App() {
     const onNavigate = (event: MouseEvent) => {
       const link = (event.target as Element).closest("a[href]");
       if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || !link || link.hasAttribute("download") || (link.getAttribute("target") && link.getAttribute("target") !== "_self") || document.querySelector("dialog[open]")) return;
-      const destination = new URL(link.getAttribute("href")!, location.href);
+      const href = link.getAttribute("href");
+      if (!href) return;
+      const destination = new URL(href, location.href);
       if (destination.origin !== location.origin || destination.pathname === location.pathname || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
       event.preventDefault();
       document.documentElement.classList.add("page-leaving");

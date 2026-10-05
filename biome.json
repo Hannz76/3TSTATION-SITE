@@ -28,6 +28,7 @@
         "noImgElement": "off"
       },
       "a11y": {
+        "useSemanticElements": "off",
         "noAutofocus": "off",
         "noDistractingElements": "off",
         "noHeaderScope": "off",

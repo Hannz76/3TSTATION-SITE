@@ -1,6 +1,27 @@
 node_modules/
-tsconfig.tsbuildinfo
+dist/
+*.tsbuildinfo
+
+# Local Cloudflare state, databases, and secrets
 .wrangler/
 .dev.vars
+.dev.vars.*
+!.dev.vars.example
 .env
 .env.*
+!.env.example
+*.sqlite
+*.sqlite-*
+*.db
+*.db-*
+
+# Test output and local caches
+coverage/
+playwright-report/
+test-results/
+.cache/
+*.log
+
+# Operating system files
+.DS_Store
+Thumbs.db

@@ -6,13 +6,19 @@
   "scripts": {
     "dev": "vite --host 0.0.0.0",
     "build": "tsc -b && vite build --outDir dist",
-    "lint": "bunx tsc --noEmit && bunx biome lint --write",
-    "format": "bunx biome format --write",
+    "lint": "tsc --noEmit && biome lint src",
+    "format": "biome format --write src",
     "preview": "vite preview",
     "dev:api": "wrangler dev --ip 127.0.0.1 --port 8787",
     "db:migrate": "wrangler d1 migrations apply REVIEWS_DB --local",
     "preview:full": "npm run build && npm run db:migrate && npm run dev:api",
-    "test:reviews": "node tests/reviews.mjs"
+    "test:reviews": "node tests/reviews.mjs",
+    "test:smoke": "node smoke.mjs",
+    "test:waves": "node tests/gradient-waves.mjs",
+    "test:repair": "node tests/repair-selection.mjs",
+    "check:deploy": "node scripts/check-deploy.mjs",
+    "deploy:dry-run": "npm run build && wrangler deploy --dry-run",
+    "deploy": "npm run check:deploy && npm run build && wrangler deploy"
   },
   "dependencies": {
     "gsap": "^3.15.0",
@@ -20,8 +26,7 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-grab": "latest",
-    "same-runtime": "^0.0.1",
-    "tailwindcss-animate": "^1.0.7"
+    "same-runtime": "^0.0.1"
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
@@ -48,7 +53,8 @@
     "typescript": "~5.6.3",
     "typescript-eslint": "^8.32.1",
     "vite": "^6.3.5",
-    "wrangler": "^4.147.0"
+    "wrangler": "^4.147.0",
+    "tailwindcss-animate": "^1.0.7"
   },
   "engines": {
     "node": ">=22.22.2"

@@ -102,11 +102,12 @@ function ReviewForm({ onPublished }: { onPublished: () => void }) {
   </div>;
 }
 
-function PublishedReviews({ version }: { version: number }) {
+function PublishedReviews() {
   const [page, setPage] = useState<ReviewPage | null>(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [retry, setRetry] = useState(0);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Retry explicitly triggers a new request; publishing remounts the keyed feed.
   useEffect(() => {
     let cancelled = false;
     setError("");
@@ -115,7 +116,7 @@ function PublishedReviews({ version }: { version: number }) {
       .catch(() => { if (!cancelled) setError("We couldn’t load the reviews. Please try again."); })
       .finally(() => { if (!cancelled) setBusy(false); });
     return () => { cancelled = true; };
-  }, [version, retry]);
+  }, [retry]);
   const more = async () => {
     if (!page?.nextCursor || busy) return;
     setBusy(true);
@@ -157,7 +158,7 @@ export default function CustomerReviews() {
         <div className="review-gallery-controls"><span>Drag to explore · select to read</span><div><button type="button" onClick={() => move("ArrowLeft")} aria-label="Previous review screenshot">←</button><button type="button" onClick={() => setPaused(current => !current)} aria-label={paused ? "Play review carousel" : "Pause review carousel"}>{paused ? "Play" : "Pause"}</button><button type="button" onClick={() => move("ArrowRight")} aria-label="Next review screenshot">→</button></div></div>
       </div>
       <div className="review-writing-layout"><div className="review-invitation"><span className="eyebrow">YOUR TURN</span><h3>Good words.<br />Honest thoughts.<br /><span>All welcome.</span></h3><p>Powered up your game? Given your phone a fresh start? Found your favourite flavour? Tell us how it went.</p><div className="review-invitation-note"><span aria-hidden="true">✳</span> Every experience helps us make the next one better.</div></div><ReviewForm onPublished={() => setVersion(n => n + 1)} /></div>
-      <PublishedReviews key={version} version={version} />
+      <PublishedReviews key={version} />
     </div>
     {selected !== null && <ScreenshotViewer index={selected} close={() => setSelected(null)} />}
   </section>;
