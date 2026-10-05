@@ -1,4 +1,7 @@
 node_modules/
+# npm is the deployment package manager. Avoid conflicting auto-detection.
+bun.lock
+bun.lockb
 dist/
 *.tsbuildinfo
 

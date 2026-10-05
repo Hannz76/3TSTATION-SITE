@@ -4,7 +4,7 @@ A responsive React + TypeScript + Vite business website for game top-ups, phone 
 
 ## Run locally
 
-Use Node.js 22.22.2 or newer (Node 24 LTS recommended).
+Use Node.js 22.22.2 or newer (Node 24 LTS recommended) and npm. `package-lock.json` is the single dependency lockfile; use `npm ci` for reproducible installs.
 
 ```bash
 npm ci
@@ -107,7 +107,7 @@ The homepage `#about` section introduces the company and its three founders. Edi
 
 ## Git and Cloudflare deployment checks
 
-Use Node 24 (`.nvmrc`). Commit the source, `public/`, database migrations, configuration, and lockfiles. `.gitignore` excludes `dist/`, installed packages, local databases, local environment secrets, logs, and test output. Cloudflare must build `dist/` from source; it is not committed.
+Use Node 24 (`.nvmrc`) and npm 10.9.2 (`packageManager` in `package.json`). Commit the source, `public/`, database migrations, configuration, and `package-lock.json`. `.gitignore` excludes `dist/`, installed packages, local databases, local environment secrets, logs, and test output. Cloudflare must build `dist/` from source; it is not committed.
 
 ```bash
 npm ci
@@ -133,10 +133,14 @@ For a GitHub-connected **Cloudflare Worker** build, use:
 - Node version: 24
 - Worker name: `3tstation-site`, matching `wrangler.jsonc`
 
+Cloudflare previously selected Bun because `bun.lock` was committed. Its Bun 1.2.15 could not read lockfile format 2, so installation failed before the build command ran. The Bun lockfiles are now removed and ignored; keep only `package-lock.json` so automatic installation uses npm. Use the npm build command above. Changing only the build command would not fix a failure in the earlier install step.
+
+After pushing this fix, build the new commit instead of retrying the old failed commit. If Cloudflare still reports Bun, confirm the deployed commit no longer contains `bun.lock` or `bun.lockb`, and clear the build cache under Settings → Build → Build cache. Cloudflare's [build image documentation](https://developers.cloudflare.com/workers/ci-cd/builds/build-image/) lists its runtime versions and overrides.
+
 Apply `npx wrangler d1 migrations apply REVIEWS_DB --remote` once before the first live deployment. Local review data is not uploaded; the production database starts empty. Do not point branch previews at the production review database unless you intend them to share customer data.
 
 These settings follow [Cloudflare Workers Builds configuration](https://developers.cloudflare.com/workers/ci-cd/builds/configuration/) and [D1 setup](https://developers.cloudflare.com/d1/get-started/).
 
 ### Dependency audit (5 October 2026)
 
-Compatible security fixes have been applied and both lockfiles synchronized. The remaining npm audit finding is [braces stack-exhaustion denial of service](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm), reported through six packages in Tailwind 3's build dependency chain. The registry currently reports no fix. These packages run while building local source and are not bundled into the review Worker. Do not treat this as a clean full dependency audit; revisit the advisory or migrate the CSS build tooling when a fix is available. `tailwindcss-animate` is classified as a development dependency because it is a build plugin.
+Compatible security fixes have been applied to the npm lockfile. The remaining npm audit finding is [braces stack-exhaustion denial of service](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm), reported through six packages in Tailwind 3's build dependency chain. The registry currently reports no fix. These packages run while building local source and are not bundled into the review Worker. Do not treat this as a clean full dependency audit; revisit the advisory or migrate the CSS build tooling when a fix is available. `tailwindcss-animate` is classified as a development dependency because it is a build plugin.
