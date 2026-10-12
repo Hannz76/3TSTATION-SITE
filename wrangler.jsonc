@@ -2,6 +2,7 @@
   "name": "3tstation-site",
   "main": "worker/index.js",
   "compatibility_date": "2026-09-28",
+  "compatibility_flags": ["nodejs_compat"],
   "assets": {
     "directory": "./dist",
     "binding": "ASSETS",

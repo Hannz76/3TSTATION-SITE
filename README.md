@@ -11,11 +11,11 @@ npm ci
 npm run preview:full
 ```
 
-This builds the site, initializes the local review database, and serves the full site at `http://127.0.0.1:8787`. For live frontend editing, keep the API server running and start `npm run dev` in a second terminal; Vite forwards `/api` requests to port 8787.
+This builds the site, initializes the local reviews and orders database, and serves the full site at `http://127.0.0.1:8787`. For live frontend editing, keep the API server running and start `npm run dev` in a second terminal; Vite forwards `/api` requests to port 8787.
 
 Production check: `npm run build`. Preview the build with `npm run preview`.
 
-Browser smoke check: with Vite or the full Worker preview running and Playwright/Chromium available, run `node smoke.mjs`. If Playwright is installed outside the project, set `PLAYWRIGHT_MODULE` to its absolute `index.mjs` path. The check covers top-up navigation, catalogue filtering, calculator, ID format, required fields, enquiry drafts, yogurt quantities, mobile navigation, and horizontal overflow at four widths. Set `SITE_URL` to check another server.
+Browser smoke check: with Vite or the full Worker preview running and Playwright/Chromium available, run `node smoke.mjs`. If Playwright is installed outside the project, set `PLAYWRIGHT_MODULE` to its absolute `index.mjs` path. The check covers top-up navigation, catalogue filtering, calculator, ID format, required fields, yogurt cart quantities, mobile navigation, and horizontal overflow at four widths. Set `SITE_URL` to check another server.
 
 ## Home-page animation
 
@@ -28,32 +28,28 @@ The hero uses the supplied React Bits GradientWaves component in `src/components
 - **Yogurt photos:** `public/images/yogurt-mango.jpg`, `yogurt-blueberry.jpg`, and `yogurt-strawberry.jpg` are copied from the supplied `yourgert picture` directory. Replace these files to update the product photos.
 - **Gaming illustration:** replace `public/images/game-controller.svg` if desired. Phone visuals are CSS illustrations in `src/index.css`.
 - **Game catalogue:** the 28 games and remote image links are adapted from the supplied project. Confirm availability and image usage rights, then preferably host approved artwork locally. An illustrated text fallback appears if remote images fail.
-- **Packages:** `topupPackages` in `src/data.ts` reproduces the example's 12 denominations and RM prices, shared across every game as requested. Package cards use native radio selection; the chosen denomination and price appear in the enquiry draft. Confirm availability and prices before accepting orders.
+- **Packages:** `topupPackages` in `shared/catalog.ts` reproduces the example's 12 denominations and RM prices, shared across every game as requested. Package cards use native radio selection; the chosen denomination is saved in the order request. Confirm availability and prices before accepting orders.
 
-## What works
+## Orders, cart and manager
 
-- Responsive navigation and service anchors.
-- Dark mode by default across all pages and dialogs, with a sun/moon toggle in the shared header. A visitor’s saved light/dark choice persists in localStorage.
-- Short page transitions, staggered hero entrances, and scroll-triggered section/card reveals; reduced-motion preference disables motion. The header’s Phone repair link scrolls to the homepage repair section.
-- Dedicated `/topup` page with a second navigation bar, featured games, a searchable 28-game catalogue with category filters, and `/topup/order/:slug` game enquiry pages.
-- Dedicated `/repair` page with a device selector, “Get your device fixed” workflow, editable repair estimates, transparent service pricing, process steps, and quote request form.
-- `/topup/calculator` win-rate estimates and `/topup/check-region` player ID format checks. `/topup/track-order` explains that tracking requires a live ordering system.
-- Validated top-up and repair enquiry builders.
-- Yogurt flavour selection, per-flavour quantities, and trio selection.
-- Editable enquiry drafts, clipboard copying, and a WhatsApp handoff when your number is configured.
-- Keyboard-accessible native dialogs with Escape dismissal, focus containment/restoration, and scroll locking.
-- FAQ disclosures, reduced-motion support, SEO metadata, product photos, and local illustrations.
+The yogurt cart keeps flavour quantities in localStorage across page navigation. Sticks cost RM1.80 each. Store collection is free. Delivery costs RM1 per order, requires at least five sticks and is available only within TVETMARA Besut. The footer includes a Google Maps preview and directions.
 
-## Before going live
+Checkout, top-up requests and repair requests save orders in D1. Customers receive a private tracking link. Game top-up and repair prices remain subject to a manager-confirmed quote. The tracking page shows status, public notes and payment totals, without exposing contact details or account identifiers. Pending submission credentials live in sessionStorage; contact details are not stored with the cart. Identical retries return the same order.
 
-The game, repair, and yogurt flows are **frontend enquiries**, not a payment gateway, live game API, inventory system, or booking backend. Customer reviews are stored by the separate review API described below. Form submission prepares a request locally; it never claims an order, repair appointment, or payment has been completed. Details remain in React memory and are cleared on page reload. Enquiry details are not sent to a server by the app. Review submissions are different: the customer explicitly agrees to publish their name, rating, service, and review, which are stored in the review database. Only the theme preference is stored in localStorage.
+The manager signs in at `/admin` to view and filter orders, confirm quotes, update status, record payments/refunds and other income/expenses, and upload the DuitNow QR. The overview reports orders and actual cash received/spent. Completing an order does not record payment. Correct cash entries by voiding them with a reason.
 
-With a business WhatsApp number configured, customers can open their prepared message in WhatsApp and send it themselves. Without contact details, the site clearly explains that enquiries have not been sent and offers a copyable draft.
+**Before deploying this update:** provision the single manager account and use a Workers plan with enough CPU allowance for password verification. Follow [manager setup](docs/admin-setup.md). The existing deployment command applies the new orders migration. Upload the business DuitNow QR through Payment settings after login. No production credentials or fake QR are included.
 
-Before launch, add verified contacts, prices and currency, service coverage, shop hours, repair terms, any applicable inspection fees/warranties, and yogurt sizes/ingredients/allergen information. Connect a backend only if live order placement or payment is needed. Fonts currently load from Google Fonts; host them locally if required by your privacy or offline requirements.
+```bash
+npm run admin:setup
+npm run preview:full
+# Isolated database and browser checks:
+npm run test:orders
+```
 
-SPA fallback is handled by `wrangler.jsonc` (`not_found_handling: single-page-application`), so no `_redirects` file is needed.
+`test:orders` uses ports 8789 and 8790 with temporary test credentials and databases. It does not write test orders into production or your normal local database. Screenshots are written to `/tmp/3t-commerce-previews/`.
 
+Payments are confirmed manually. There is no bank integration, automatic payment verification, inventory reservation or automatic delivery booking. Confirm game package availability, repair terms and ingredients/allergens with customers. Fonts currently load from Google Fonts. SPA routes use the Worker asset fallback.
 
 ## Customer reviews
 
@@ -82,9 +78,9 @@ npm run deploy
 
 For Cloudflare Builds, use the build and deploy commands below. No remote migration or deployment has been performed from this workspace; the production schema is initialized when the configured deployment command succeeds.
 
-Keep the `REVIEWS_DB` and `ASSETS` bindings and `run_worker_first: ["/api/*"]`; they ensure API requests reach the Worker while page links continue to load the site. A static-only preview (`npm run preview`) cannot publish reviews.
+Keep the `REVIEWS_DB` and `ASSETS` bindings and `run_worker_first: ["/api/*"]`; they ensure API requests reach the Worker while page links continue to load the site. A static-only preview (`npm run preview`) cannot submit reviews or orders, or sign in to the manager page.
 
-To hide an unwanted review without deleting it, use Cloudflare's D1 console: `UPDATE reviews SET visible = 0 WHERE id = <review_id>;`. Hidden reviews are excluded from the list, count, and average. There is no public moderation endpoint or admin page.
+To hide an unwanted review without deleting it, use Cloudflare's D1 console: `UPDATE reviews SET visible = 0 WHERE id = <review_id>;`. Hidden reviews are excluded from the list, count, and average. There is no public moderation endpoint. The manager page currently manages orders and cash, not review moderation.
 
 Cloudflare references: [D1 local development](https://developers.cloudflare.com/d1/best-practices/local-development/) and [Workers static asset bindings](https://developers.cloudflare.com/workers/static-assets/binding/).
 
@@ -112,6 +108,7 @@ npm ci
 npm run lint
 npm run build
 npm run test:reviews
+npm run test:orders
 # With the full local Worker preview running on port 8787:
 SITE_URL=http://127.0.0.1:8787 npm run test:smoke
 npm run test:repair
@@ -135,7 +132,7 @@ Cloudflare previously selected Bun because `bun.lock` was committed. Its Bun 1.2
 
 After pushing this fix, build the new commit instead of retrying the old failed commit. If Cloudflare still reports Bun, confirm the deployed commit no longer contains `bun.lock` or `bun.lockb`, and clear the build cache under Settings → Build → Build cache. Cloudflare's [build image documentation](https://developers.cloudflare.com/workers/ci-cd/builds/build-image/) lists its runtime versions and overrides.
 
-`npm run deploy:ci` initializes the review tables on the first deployment and applies only pending migrations on later deployments. Local review data is not uploaded; the production database starts empty. Do not point branch previews at the production review database unless you intend them to share customer data.
+`npm run deploy:ci` initializes the review and order tables on the first deployment and applies only pending migrations on later deployments. Local customer data is not uploaded; the production database starts empty. Do not point branch previews at the production review database unless you intend them to share customer data.
 
 These settings follow [Cloudflare Workers Builds configuration](https://developers.cloudflare.com/workers/ci-cd/builds/configuration/) and [D1 setup](https://developers.cloudflare.com/d1/get-started/).
 

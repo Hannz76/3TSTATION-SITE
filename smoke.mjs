@@ -53,26 +53,16 @@ try {
   assert.match(await page.locator(".topup-tool-result").textContent(), /Only the game's servers can verify/);
   await page.getByRole("navigation", { name: "Game top-up navigation" }).getByRole("link", { name: "Track order" }).click();
   await page.waitForURL(/\/topup\/track-order$/);
-  assert.match(await page.locator(".topup-tool-panel").textContent(), /Tracking isn't live yet/);
+  assert.equal(await page.getByRole("heading", { name: "Track your order." }).count(), 1);
   await page.getByRole("navigation", { name: "Game top-up navigation" }).getByRole("link", { name: "All games" }).click();
   await page.waitForURL(/\/topup$/);
 
   await page.locator(".topup-game-grid .game-card").first().click();
   await page.waitForURL(/\/topup\/order\/mobile-legends-my$/);
   assert.match(page.url(), /\/topup\/order\/mobile-legends-my$/);
-  await page.getByRole("button", { name: "Prepare top-up enquiry" }).click();
-  assert.equal(await page.locator(".request-ready").count(), 0, "Required fields block empty submission");
-  await page.getByLabel("Player / User ID").fill("12345678");
-  await page.getByLabel("Server / Zone ID").fill("1234");
+  await page.getByRole("button", { name: "Submit top-up request" }).click();
+  assert.equal(await page.locator(".order-receipt").count(), 0, "Required fields block empty submission");
   assert.equal(await page.getByRole("radio").count(), 12);
-  await page.getByRole("radio", { name: "70 (64+6) Diamonds RM 5.39", exact: true }).check();
-  await page.getByLabel("Your name", { exact: true }).fill("Test Customer");
-  await page.getByLabel("Phone / WhatsApp").fill("0123456789");
-  await page.getByRole("button", { name: "Prepare top-up enquiry" }).click();
-  assert.match(await page.getByLabel("Your request").inputValue(), /70 \(64\+6\) Diamonds — RM 5\.39/);
-  assert.match(await page.getByLabel("Your request").inputValue(), /Player ID: 12345678/);
-  await page.getByRole("button", { name: "Edit my enquiry" }).click();
-  assert.equal(await page.getByLabel("Player / User ID").inputValue(), "12345678", "Editing retains form details");
   const packageValues = await page.getByRole("radio").evaluateAll(radios => radios.map(radio => radio.value));
   for (const slug of ["pubg-mobile", "free-fire-malaysia", "mobile-legends-top-up-via-login"]) {
     await page.goto((process.env.SITE_URL || "http://localhost:5173") + `/topup/order/${slug}`);
@@ -95,26 +85,14 @@ try {
   await page.getByLabel("Phone model").fill("iPhone 14");
   await page.getByLabel("Your name", { exact: true }).fill("Test Customer");
   await page.getByLabel("Phone / WhatsApp").fill("0123456789");
-  await page.getByRole("button", { name: "Prepare repair enquiry" }).click();
-  assert.match(await page.getByLabel("Your request").inputValue(), /Apple iPhone 14/);
-  assert.match(await page.getByLabel("Your request").inputValue(), /Screen repair/);
-  await page.keyboard.press("Escape");
-
+  assert.equal(await page.getByRole("button", { name: "Submit repair request" }).count(), 1);
   await page.goto((process.env.SITE_URL || "http://localhost:5173") + "/");
-  await page.getByRole("button", { name: "Make it a trio" }).click();
+  await page.getByRole("button", { name: "Add a trio" }).click();
   for (const flavor of ["Mango", "Blueberry", "Strawberry"]) {
     assert.equal(await page.getByLabel(`${flavor} quantity`, { exact: true }).textContent(), "1");
     await page.getByLabel(`Remove one ${flavor}`, { exact: true }).click();
   }
-  assert.equal(await page.getByRole("button", { name: /Ask about my/ }).isDisabled(), true);
   await page.getByLabel("Add one Mango", { exact: true }).click();
-  await page.getByLabel("Add one Mango", { exact: true }).click();
-  await page.getByLabel("Your name", { exact: true }).fill("Test Customer");
-  await page.getByLabel("Phone / WhatsApp").fill("0123456789");
-  await page.getByRole("button", { name: /Ask about my/ }).click();
-  const yogurtRequest = await page.getByLabel("Your request").inputValue();
-  assert.match(yogurtRequest, /Mango: 2 sticks/);
-  assert.doesNotMatch(yogurtRequest, /Blueberry:/);
   assert.equal(await page.locator(".yogurt-order-row img[src$='.jpg']").count(), 3);
   await page.keyboard.press("Escape");
 
@@ -125,7 +103,7 @@ try {
   await page.getByRole("button", { name: "Open navigation" }).click();
   await page.locator("#main-navigation").getByRole("link", { name: "Fresh yogurt" }).click();
   assert.equal(await page.getByRole("button", { name: "Open navigation" }).getAttribute("aria-expanded"), "false");
-  await page.getByRole("button", { name: "Choose Strawberry yogurt" }).click();
+  await page.getByRole("button", { name: "Add Strawberry yogurt to cart" }).click();
   assert.equal(await page.getByLabel("Strawberry quantity", { exact: true }).textContent(), "1");
   await page.keyboard.press("Escape");
   await page.goto((process.env.SITE_URL || "http://localhost:5173") + "/topup");
@@ -148,7 +126,7 @@ try {
   assert.equal(await page.locator("html").getAttribute("data-theme"), "dark", "Dark choice persists on repair page");
   assert.equal(await page.locator(".repair-pricing-card").evaluate(el => getComputedStyle(el).backgroundColor), "rgb(27, 38, 59)");
   await page.setViewportSize({ width: 1440, height: 900 });
-  await page.getByRole("button", { name: "Let's talk" }).click();
+  await page.getByRole("button", { name: "Let's have a chat" }).click();
   assert.equal(await page.locator("dialog").evaluate(el => getComputedStyle(el).backgroundColor), "rgb(27, 38, 59)");
   await page.keyboard.press("Escape");
   for (const width of [1440, 768, 390, 320]) {
@@ -170,7 +148,7 @@ try {
     await reduced.close();
   }
   assert.deepEqual(errors, [], "No uncaught browser errors");
-  console.log("Passed: top-up routes/navigation, catalogue search/filter, calculator, ID format, enquiry draft, repair, yogurt, mobile navigation, theme, transitions, reduced motion, responsive widths, browser errors.");
+  console.log("Passed: top-up routes/navigation, catalogue search/filter, calculator, ID format, required fields, repair, yogurt, mobile navigation, theme, transitions, reduced motion, responsive widths, browser errors.");
 } finally {
   await browser.close();
 }

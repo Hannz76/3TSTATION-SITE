@@ -1,0 +1,5 @@
+.location-section { display: grid; grid-template-columns: 1fr 1.65fr; align-items: center; gap: 48px; padding-block: 48px; border-bottom: 1px solid var(--border); }
+.location-copy h2 { margin: 12px 0; font: 500 32px var(--heading); letter-spacing: -.7px; }
+.location-copy p { color: var(--muted); line-height: 1.8; margin-bottom: 24px; font-size: 14px; }
+.location-map { width: 100%; height: 300px; border: 1px solid var(--border); border-radius: 18px; background: #d4c4a8; }
+@media (max-width: 650px) { .location-section { grid-template-columns: 1fr; gap: 24px; padding-block: 32px; } .location-map { height: 260px; } }

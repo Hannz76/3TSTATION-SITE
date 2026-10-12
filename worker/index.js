@@ -1,3 +1,5 @@
+import { commerce } from './commerce.js';
+import { ApiError } from './http.js';
 const services = new Set(["Game top-up", "Phone repair", "Fresh yogurt", "Store visit"]);
 const json = (body, status = 200, headers = {}) => Response.json(body, { status, headers: { "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff", ...headers } });
 const publicFields = "id, name, service, rating, message, created_at";
@@ -69,7 +71,14 @@ export default {
       try { return await reviews(request, env); }
       catch { return json({ error: "Reviews are temporarily unavailable. Your review has not been confirmed; please try again." }, 503); }
     }
-    if (path.startsWith("/api/")) return json({ error: "Not found." }, 404);
+    if (path.startsWith("/api/")) {
+      try { return await commerce(request, env); }
+      catch (error) {
+        if (error instanceof ApiError) return json({ error: error.message }, error.status);
+        console.error('Commerce request failed', error instanceof Error ? error.message : 'Unknown error');
+        return json({ error: "Orders are temporarily unavailable. Your change has not been confirmed; please retry." }, 503);
+      }
+    }
     return env.ASSETS.fetch(request);
   },
 };
